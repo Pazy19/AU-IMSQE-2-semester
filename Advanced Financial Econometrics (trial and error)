@@ -2,7 +2,30 @@ Advanced Financial Econometrics (trial and error document)
 
 # Daniel coding
 ## Working
-
+f_SVHeston <- function(T, n, theta, kappa, xi, rho) {
+  
+  # Setting horizon and discretization
+  N <- T * n + 1
+  dt <- 1/n
+  
+  # Initialization
+  v0 <- theta # This always starts sigma_t^2 from theta
+  
+  # simulate v_t=sigma_t^2 which is a square root diffusion process
+  dW <- rnorm(N, 0, sqrt(dt)) # increments of Brownian motion W
+  v <- rep(v0, N)
+  dB <- rho * dW + sqrt((1 - rho^2)) * rnorm(N, 0, sqrt(dt)) # increments of B
+  
+  for (j in 2:N) {
+    v[j] <- v[j - 1] + kappa * (theta - v[j - 1]) * dt + xi * sqrt(v[j - 1]) * dB[j - 1]
+  }
+  
+  v <- pmax(v, 0) # to avoid negative values caused by the discretization.
+  sigma <- sqrt(v)
+  X <- cumsum(sigma * dW)
+  
+  return(list(X = X, sigma = sigma))
+}
 ## Not-working
 
 
