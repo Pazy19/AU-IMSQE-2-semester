@@ -52,8 +52,74 @@ sigma <- result$sigma
 # Pavel coding
 ## Working
 
-## Not-working
+## NOT WORKING ######
+f_SVHeston <- function(T, n, theta, kappa, xi, rho) {
+  # Setting horizon and discretization
+  N <- T * n + 1
+  dt <- 1 / n
+  
+  # Initialization. This always starts sigma_t^2 from theta shape = 2*theta*kappa/(xi^2); 
+# Better option might be to start from the 
+# scale = 1/(2*kappa/(xi^2)); stationary distrubution of sigma_t^2 
+# v0 = gamrnd(shape,scale); %which is gamma
+  v0 <- theta
+  
+  # Simulate v_t = sigma_t^2 which is a squared root diffusion process
+  dW <- rnorm(N, mean = 0, sd = sqrt(dt))
+  v <- rep(v0, N)
+  dB <- rho * dW + sqrt((1 - rho^2)) * rnorm(N, mean = 0, sd = sqrt(dt)) # increments if B
+  
+  for (j in 2:N) {
+    v[j] <- v[j - 1] + kappa * (theta - v[j - 1]) * dt + xi * sqrt(v[j - 1]) * dB[j - 1]
+  }
+  
+  v <- pmax(v, 0) # to avoid negative values caused by the dicretization.
+  sigma <- sqrt(v)
+  X <- cumsum(sigma * dW)
+  
+  return(list(X = X, sigma = sigma))
+}
+n <- 2340
+dt <- 1 / n
+T <- 10
+sigma0 <- 0.04 / 250
+kappa <- 5 / 250
+xi <- 0.50 / 250
+rho <- -0.50
 
+# Calculate X and sigma using the f_SVHeston function
+res <- f_SVHeston(T, n, sigma0, kappa, xi, rho)
+X <- res$X
+sigma <- res$sigma
+
+# Calculate RV and IV
+r <- matrix(diff(X), n, T)
+RV <- sum(r^2)
+s <- matrix(sigma[-NROW(sigma)], n, T)
+IV <- mean(s^2)
+
+# Plot the results
+a <- 100 * 250
+
+# Plot 1
+a <- 100 * 250  # we multiply everything with number a for better visualization
+plot(0:dt:T, a * sigma^2, type = "l", col = "blue", xlab = "time", ylab = "volatility")
+points(1:T, a * RV, col = "black", pch = "x")
+points(1:T, a * IV, col = "red", pch = "o")
+legend("topright", c("Spot Vol", "RV", "IV"), col = c("blue", "black", "red"), lty = c(1, 1, 1),
+       pch = c(NA, "x", "o"))
+
+# Plot 2
+RQ <- n * sum(r^4)
+CI <- 1.96 * sqrt(2 * RQ / 3) / sqrt(n)
+id <- 1:T
+plot(id, a * RV, col = 'black', pch = 'x', ylim = c(0, 1.5 * max(a * c(RV, IV))), xlab = 'time', ylab = 'volatility')
+points(id, a * IV, col = 'red', pch = 'o')
+points(id, a * (RV - CI), col = 'black', pch = 'd')
+points(id, a * (RV + CI), col = 'black', pch = 'd')
+legend('topleft', legend = c('RV', 'IV', 'CI'), col = c('black', 'red', 'black'), pch = c('x', 'o', 'd'), lty = 1)
+
+#### NOT WORKING###
 
 
 
