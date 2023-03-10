@@ -26,6 +26,24 @@ f_SVHeston <- function(T, n, theta, kappa, xi, rho) {
   
   return(list(X = X, sigma = sigma))
 }
+
+# Example usage:
+n <- 2340
+dt <- 1/n
+T <- 10
+sigma0 <- 0.04/250
+kappa <- 5/250
+xi <- 0.50/250
+rho <- -0.50
+
+set.seed(123)
+result <- f_SVHeston(T, n, sigma0, kappa, xi, rho)
+X <- result$X
+sigma <- result$sigma
+
+
+
+
 ## Not-working
 
 
