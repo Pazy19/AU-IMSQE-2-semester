@@ -45,6 +45,32 @@ sigma <- result$sigma
 
 
 ## Not-working
+f_SVHeston <- function(T, n, theta, kappa, xi, rho) {
+  # Setting horizon and discretization
+  N <- T * n + 1
+  dt <- 1 / n
+  
+  # Initialization. This always starts sigma_t^2 from theta shape = 2*theta*kappa/(xi^2); 
+# Better option might be to start from the 
+# scale = 1/(2*kappa/(xi^2)); stationary distrubution of sigma_t^2 
+# v0 = gamrnd(shape,scale); %which is gamma
+  v0 <- theta
+  
+  # Simulate v_t = sigma_t^2 which is a squared root diffusion process
+  dW <- rnorm(N, mean = 0, sd = sqrt(dt))
+  v <- rep(v0, N)
+  dB <- rho * dW + sqrt((1 - rho^2)) * rnorm(N, mean = 0, sd = sqrt(dt)) # increments if B
+  
+  for (j in 2:N) {
+    v[j] <- v[j - 1] + kappa * (theta - v[j - 1]) * dt + xi * sqrt(v[j - 1]) * dB[j - 1]
+  }
+  
+  v <- pmax(v, 0) # to avoid negative values caused by the dicretization.
+  sigma <- sqrt(v)
+  X <- cumsum(sigma * dW)
+  
+  return(list(X = X, sigma = sigma))
+}
 
 
 
